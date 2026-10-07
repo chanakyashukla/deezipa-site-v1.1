@@ -1,0 +1,57 @@
+# Publishes the DeeZipa website in public/ to GitHub Pages.
+#
+#   Repository : chanakyashukla/deezipa-site-v1.1
+#   Branch     : main
+#   Output     : public/   (index.html + styles.css + script.js + assets/)
+#   Live URL   : https://chanakyashukla.github.io/deezipa-site-v1.1/
+#
+# The site uses only same-directory relative references
+# (styles.css, script.js, assets/..., #anchors), so it works unchanged under
+# the /deezipa-site-v1.1/ project-site base path. Nothing is rooted at "/".
+#
+# Only the contents of public/ are uploaded — never the repository root.
+
+name: Deploy static site to Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Verify build output directory
+        run: |
+          test -f public/index.html || { echo "ERROR: public/index.html not found"; exit 1; }
+          echo "Publishing (contents of public/ only):"
+          find public -type f | sort
+          echo "--- nothing outside public/ is uploaded ---"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
